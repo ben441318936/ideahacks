@@ -72,6 +72,8 @@ void setup() {
   printWifiStatus();
 }
 
+boolean stopplz=false;
+
 void loop() {
 
   // if ten minutes have passed since your last connection,
@@ -83,10 +85,11 @@ void loop() {
     httpRequest();
   }
 
-  if (!client.available()){
+  if (!client.available() && !stopplz){
     Serial.println("No incoming data");
   }
   while (client.available()) {
+    stopplz = true;
     char c = client.read();
     Serial.write(c);
   }
@@ -159,13 +162,13 @@ void httpRequest() {
  if (client.connect(server, 80)) { 
    Serial.println("connected to server"); 
    // Make a HTTP request: 
-   client.print("GET /data/2.5/forecast?"); 
-   client.print("q=5368361"); 
+   client.print("GET /data/2.5/group?"); 
+   client.print("id=5368361"); 
    client.print("&appid="+apiKey); 
    client.print("&cnt=3"); 
-   client.println("&units=metric"); 
+   client.println("&units=metric HTTP/1.1"); 
    client.println("Host: api.openweathermap.org");   
-   client.println("Connection: close"); 
+   //client.println("Connection: close"); 
    client.println(); 
  } else { 
    Serial.println("unable to connect"); 
