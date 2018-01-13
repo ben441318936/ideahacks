@@ -34,7 +34,7 @@ WiFiClient client;
 unsigned long lastConnectionTime = 10 * 60 * 1000;     // last time you connected to the server, in milliseconds
 const unsigned long postingInterval = 10 * 60 * 1000;  // posting interval of 10 minutes  (10L * 1000L; 10 seconds delay for testing)
 
-Adafruit_HTU21DF htu = Adafruit_HTU21DF();
+//Adafruit_HTU21DF htu = Adafruit_HTU21DF();
 float sensTemp = 0;
 float sensHum = 0;
 
@@ -66,10 +66,10 @@ void setup() {
   // you're connected now, so print out the status:
   printWifiStatus();
 
-  if (!htu.begin()) {
+  /*f (!htu.begin()) {
     Serial.println("Couldn't find sensor!");
     while (1);
-  }
+  }*/
 }
 
 boolean stopplz = false;
@@ -127,11 +127,11 @@ void loop() {
     startJson = false;        // set startJson to false to indicate that a new message has not yet started
   }
 
-  sensTemp = htu.readTemperature();
+  /*sensTemp = htu.readTemperature();
   sensHum = htu.readHumidity();
 
   Serial.println(sensTemp);
-  Serial.println(sensTemp);
+  Serial.println(sensTemp);*/
 }
 
 void parseJson(const char * jsonString) {
