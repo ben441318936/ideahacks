@@ -49,6 +49,8 @@ void setup() {
   lcd.clear();
   Serial.println("Serial initialised");
   lcd.print("LCD initialised");
+  delay(2000);
+  lcd.clear();
 
   text.reserve(JSON_BUFF_DIMENSION);
   Serial.println("json buff loaded");
@@ -137,10 +139,7 @@ void loop() {
     getSensor = true;
   }
 
-  
   if (getSensor) {
-    lcd.clear();
-    delay(1000);
     sensTemp = htu.readTemperature();
     sensHum = htu.readHumidity();
     lcd.setCursor(0,0);
