@@ -110,29 +110,31 @@ void loop() {
     if (c == '{') {
       startJson = true;         // set startJson true to indicate json message has started
       endResponse++;
-      Serial.println("Open curly");
+      //Serial.println("Open curly");
     }
     if (c == '}') {
       endResponse--;
-      Serial.println("Close curly");
+      //Serial.println("Close curly");
     }
     if (startJson == true) {
       text += c;
     }
-    Serial.println(endResponse);
+    //Serial.println(endResponse);
   }
   else {
     if (!stopplz)
       Serial.println("No incoming data");
+      delay(500);
   }
   // endResponse == 0 means equal number of open and close curly brackets reached
   if (endResponse == 0 && startJson == true) {
-    Serial.println("Done counting braces, parsing now...");
+    //Serial.println("Done counting braces, parsing now...");
     parseJson(text.c_str());  // parse c string text in parseJson function
     text = "";                // clear text string for the next time
     startJson = false;        // set startJson to false to indicate that a new message has not yet started
   }
 
+  /*
   if (stopplz) {
     lcd.clear();
     delay(1000);
@@ -143,6 +145,7 @@ void loop() {
     lcd.setCursor(0,1);
     lcd.print(String(sensHum));
   }
+  */
 }
 
 void parseJson(const char * jsonString) {
@@ -200,16 +203,18 @@ void parseJson(const char * jsonString) {
     willBeRain = true;
   }
 
+/*
   // convert to PST
-  struct tm tm;
+  struct tm ttmm;
   time_t epoch;
   char date[100];
-  if(strptime(timeHour3, "%Y-%m-%d %H:%M:%S", &tm) != NULL) {
-    epoch = mktime(&tm);
+  if(strptime(timeHour3, "%Y-%m-%d %H:%M:%S", &ttmm) != NULL) {
+    epoch = mktime(&ttmm);
     epoch = (long)epoch - 8 * 3600; // UTC-8
-    strftime(date, sizeof(date), "%Y-%m-%d", tm);
+    strftime(date, sizeof(date), "%Y-%m-%d", ttmm);
     Serial.println(epoch);
-  }
+  }*/
+  
 
   printWeather(timeHour3,tempHour3,humidityHour3,weatherHour3,"*C");
   printWeather(timeHour6,tempHour6,humidityHour6,weatherHour6,"*C");
