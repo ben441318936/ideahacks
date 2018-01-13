@@ -79,12 +79,14 @@ void setup() {
 }
 
 boolean stopplz = false;
+boolean getSensor = false;
 
 void loop() {
   
   // if ten minutes have passed since your last connection,
   // then connect again and send data:
   if (millis() - lastConnectionTime > postingInterval) {
+    getSensor = false;
     // note the time that the connection was made:
     lastConnectionTime = millis();
     Serial.println("Start http request");
@@ -132,10 +134,11 @@ void loop() {
     parseJson(text.c_str());  // parse c string text in parseJson function
     text = "";                // clear text string for the next time
     startJson = false;        // set startJson to false to indicate that a new message has not yet started
+    getSensor = true;
   }
 
-  /*
-  if (stopplz) {
+  
+  if (getSensor) {
     lcd.clear();
     delay(1000);
     sensTemp = htu.readTemperature();
@@ -145,7 +148,7 @@ void loop() {
     lcd.setCursor(0,1);
     lcd.print(String(sensHum));
   }
-  */
+  
 }
 
 void parseJson(const char * jsonString) {
