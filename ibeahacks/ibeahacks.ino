@@ -1,5 +1,5 @@
-//#include <Adafruit_HTU21DF.h>
-//#include <Wire.h>
+#include <Adafruit_HTU21DF.h>
+#include <Wire.h>
 
 #include <Time.h>
 #include <TimeLib.h>
@@ -34,17 +34,19 @@ WiFiClient client;
 unsigned long lastConnectionTime = 10 * 60 * 1000;     // last time you connected to the server, in milliseconds
 const unsigned long postingInterval = 10 * 60 * 1000;  // posting interval of 10 minutes  (10L * 1000L; 10 seconds delay for testing)
 
-//Adafruit_HTU21DF htu = Adafruit_HTU21DF();
-//float sensTemp = 0;
-//float sensHum = 0;
+Adafruit_HTU21DF htu = Adafruit_HTU21DF();
+float sensTemp = 0;
+float sensHum = 0;
 
 void setup() {
   //Initialize serial and wait for port to open:
   Serial.begin(9600);
+  while(!Serial);
   Serial.println("Hello world");
 
   text.reserve(JSON_BUFF_DIMENSION);
-
+  Serial.println("work after json buff thingy");
+  
   // check for the presence of the shield:
   if (WiFi.status() == WL_NO_SHIELD) {
     Serial.println("WiFi shield not present");
@@ -64,16 +66,16 @@ void setup() {
   // you're connected now, so print out the status:
   printWifiStatus();
 
-  /*if (!htu.begin()) {
+  if (!htu.begin()) {
     Serial.println("Couldn't find sensor!");
     while (1);
-  }*/
+  }
 }
 
 boolean stopplz = false;
 
 void loop() {
-
+  
   // if ten minutes have passed since your last connection,
   // then connect again and send data:
   if (millis() - lastConnectionTime > postingInterval) {
@@ -125,11 +127,13 @@ void loop() {
     startJson = false;        // set startJson to false to indicate that a new message has not yet started
   }
 
-  //sensTemp = htu.readTemperature();
-  //sensHum = htu.readHumidity();
+  sensTemp = htu.readTemperature();
+  sensHum = htu.readHumidity();
 
-  
+  Serial.println(sensTemp);
+  Serial.println(sensTemp);
 }
+
 void parseJson(const char * jsonString) {
   StaticJsonBuffer<4000> jsonBuffer;
 
@@ -148,11 +152,24 @@ void parseJson(const char * jsonString) {
 
   String city = root["city"]["name"];
 
+  float anything3 = hour3["dt"];
+  Serial.println(anything3);
+
+  float anything6 = hour6["dt"];
+  Serial.println(anything6);
+
+  float anything9 = hour9["dt"];
+  Serial.println(anything9);
+
+  float anything12 = hour12["dt"];
+  Serial.println(anything12);
+  
   String timeHour3 = hour3["dt_txt"];
   float tempHour3 = hour3["main"]["temp"];
   float humidityHour3 = hour3["main"]["humidity"];
   String weatherHour3 = hour3["weather"][0]["description"];
 
+  
   String timeHour6 = hour6["dt_txt"];
   float tempHour6 = hour6["main"]["temp"];
   float humidityHour6 = hour6["main"]["humidity"];
