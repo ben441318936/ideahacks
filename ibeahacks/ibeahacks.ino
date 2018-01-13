@@ -200,6 +200,17 @@ void parseJson(const char * jsonString) {
     willBeRain = true;
   }
 
+  // convert to PST
+  struct tm tm;
+  time_t epoch;
+  char date[100];
+  if(strptime(timeHour3, "%Y-%m-%d %H:%M:%S", &tm) != NULL) {
+    epoch = mktime(&tm);
+    epoch = (long)epoch - 8 * 3600; // UTC-8
+    strftime(date, sizeof(date), "%Y-%m-%d", tm);
+    Serial.println(epoch);
+  }
+
   printWeather(timeHour3,tempHour3,humidityHour3,weatherHour3,"*C");
   printWeather(timeHour6,tempHour6,humidityHour6,weatherHour6,"*C");
   printWeather(timeHour9,tempHour9,humidityHour9,weatherHour9,"*C");
