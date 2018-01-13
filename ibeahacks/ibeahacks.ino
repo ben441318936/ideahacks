@@ -1,3 +1,4 @@
+//sensor
 #include <Adafruit_HTU21DF.h>
 #include <Wire.h>
 
@@ -8,7 +9,9 @@
 #include <WiFi101.h>
 #include <ArduinoJson.h>
 
-
+//LCD
+#include <LiquidCrystal.h>
+LiquidCrystal lcd(12,11,5,4,3,2);
 
 #define JSON_BUFF_DIMENSION 2500
 //#include "arduino_secrets.h"
@@ -34,7 +37,7 @@ WiFiClient client;
 unsigned long lastConnectionTime = 10 * 60 * 1000;     // last time you connected to the server, in milliseconds
 const unsigned long postingInterval = 10 * 60 * 1000;  // posting interval of 10 minutes  (10L * 1000L; 10 seconds delay for testing)
 
-//Adafruit_HTU21DF htu = Adafruit_HTU21DF();
+Adafruit_HTU21DF htu = Adafruit_HTU21DF();
 float sensTemp = 0;
 float sensHum = 0;
 
@@ -42,10 +45,13 @@ void setup() {
   //Initialize serial and wait for port to open:
   Serial.begin(9600);
   while(!Serial);
-  Serial.println("Hello world");
+  lcd.begin(16, 2);
+  lcd.clear();
+  Serial.println("Serial initialised");
+  lcd.print("LCD initialised");
 
   text.reserve(JSON_BUFF_DIMENSION);
-  Serial.println("work after json buff thingy");
+  Serial.println("json buff loaded");
   
   // check for the presence of the shield:
   if (WiFi.status() == WL_NO_SHIELD) {
@@ -66,10 +72,10 @@ void setup() {
   // you're connected now, so print out the status:
   printWifiStatus();
 
-  /*f (!htu.begin()) {
+  if (!htu.begin()) {
     Serial.println("Couldn't find sensor!");
     while (1);
-  }*/
+  }
 }
 
 boolean stopplz = false;
@@ -127,11 +133,16 @@ void loop() {
     startJson = false;        // set startJson to false to indicate that a new message has not yet started
   }
 
-  /*sensTemp = htu.readTemperature();
-  sensHum = htu.readHumidity();
-
-  Serial.println(sensTemp);
-  Serial.println(sensTemp);*/
+  if (stopplz) {
+    lcd.clear();
+    delay(1000);
+    sensTemp = htu.readTemperature();
+    sensHum = htu.readHumidity();
+    lcd.setCursor(0,0);
+    lcd.print(String(sensTemp));
+    lcd.setCursor(0,1);
+    lcd.print(String(sensHum));
+  }
 }
 
 void parseJson(const char * jsonString) {
@@ -187,17 +198,6 @@ void parseJson(const char * jsonString) {
 
   if (weatherHour3 == "Rain" || weatherHour6 == "Rain" || weatherHour9 == "Rain" || weatherHour12 == "Rain") {
     willBeRain = true;
-  }
-
-  // convert to PST
-  struct tm tm;
-  time_t epoch;
-  char date[100];
-  if(strptime(timeHour3, "%Y-%m-%d %H:%M:%S", &tm) != NULL) {
-    epoch = mktime(&tm);
-    epoch = (long)epoch - 8 * 3600; // UTC-8
-    strftime(date, sizeof(date), "%Y-%m-%d", tm);
-    Serial.println(epoch);
   }
 
   printWeather(timeHour3,tempHour3,humidityHour3,weatherHour3,"*C");
