@@ -31,7 +31,8 @@ char ssid[] = "AndroidAP";        // your network SSID (name)
 char pass[] = "Ben441318936";    // your network password (use for WPA, or use as key for WEP)
 int keyIndex = 0;            // your network key Index number (needed only for WEP)
 
-String nameOfCity = "Los Angeles,CA";   // your city of interest here in format "city,countrycode"
+String nameOfCity = "Irvine,CA";   // your city of interest here in format "city,countrycode"
+String apiKey = "8e930b59cb64efd628888e8fd438cef0";
 
 String text;
 int endResponse = 0;
@@ -78,12 +79,20 @@ void loop() {
   if (millis() - lastConnectionTime > postingInterval) {
     // note the time that the connection was made:
     lastConnectionTime = millis();
-
+    Serial.println("Start http request");
     httpRequest();
   }
 
-  char c = 0;
-  if (client.available()) {
+  if (!client.available()){
+    Serial.println("No incoming data");
+  }
+  while (client.available()) {
+    char c = client.read();
+    Serial.write(c);
+  }
+
+  //char c = 0;
+  /*if (client.available()) {
     c = client.read();
     // json contains equal number of open and close curly brackets, therefore by counting
     // the open and close occurences, we can determine when a json is completely received
@@ -104,7 +113,7 @@ void loop() {
     if (startJson == true) {
       text += c;
     }
-  }
+  }*/
 }
 void parseJson(const char * jsonString) {
   StaticJsonBuffer<4000> jsonBuffer;
@@ -145,20 +154,22 @@ void httpRequest() {
   // This will free the socket on the WiFi shield
   client.stop();
 
-  // if there's a successful connection:
-  if (client.connect(server, 80)) {
-    // Serial.println("connecting...");
-    // send the HTTP PUT request:
-    client.println("GET /data/2.5/forecast?q=" + nameOfCity + "&mode=json&units=metric&cnt=2 HTTP/1.1");
-    client.println("Host: api.openweathermap.org");
-    client.println("User-Agent: ArduinoWiFi/1.1");
-    client.println("Connection: close");
-    client.println();
-  }
-  else {
-    // if you couldn't make a connection:
-    Serial.println("Counldn't make a connection");
-  }
+  Serial.println("\nStarting connection to server..."); 
+ // if you get a connection, report back via serial: 
+ if (client.connect(server, 80)) { 
+   Serial.println("connected to server"); 
+   // Make a HTTP request: 
+   client.print("GET /data/2.5/forecast?"); 
+   client.print("q=5368361"); 
+   client.print("&appid="+apiKey); 
+   client.print("&cnt=3"); 
+   client.println("&units=metric"); 
+   client.println("Host: api.openweathermap.org");   
+   client.println("Connection: close"); 
+   client.println(); 
+ } else { 
+   Serial.println("unable to connect"); 
+ } 
 }
 
 void printDiffString(String now, String later, String weatherType) {
