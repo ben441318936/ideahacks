@@ -47,14 +47,14 @@ const char server[] = "api.openweathermap.org";    // name address for openweath
 
 WiFiClient client;
 
-/////////////////////////////////////////////////
+///////////////////////////////////////////////// extremely impt constants
 
 
 unsigned long lastConnectionTime = 10 * 60 * 1000;     // last time you connected to the server, in milliseconds
 const unsigned long postingInterval = 2 * 60 * 1000;  // posting interval of 10 minutes  (10L * 1000L; 10 seconds delay for testing)
 String countryCode = "5368361"; // LA:5368361 London:2643741
 const float MEASURE_INT = 0.5; // number of minutes between humidity readings
-const int NUM_DATA = 2; // number of data points to collect
+const int NUM_DATA = 1; // number of data points to collect
 
 
 
