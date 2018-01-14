@@ -155,12 +155,13 @@ void loop() {
   if (getSensor) {
     timeElapsed = millis() - timeStart;
     if (timeElapsed >= 30 * 60 * 1000) {
-      if (dataPoints == 12) {
+      if (!willRain && dataPoints == 24) {
         dataPoints = 0;
         humAvg /= 30;
         if (humAvg < 50) {
-          timeToWater = true;
-          isHumLow = true;
+          servo.write(180); // open valve
+          delay(100 * (100 - humAvg) / 2 );
+          servo.write(90);
         }
         humAvg = 0;
         timeElapsed = 0;
