@@ -29,13 +29,19 @@ boolean startJson = false;
 boolean timeToWater = false;
 boolean willBeRain = false;
 
+int timeStart = millis();
+int timeElapsed = 0;
+int humAvg = 0;
+int dataPoints = 0;
+boolean isHumLow = false;
+
 int status = WL_IDLE_STATUS;
 
 const char server[] = "api.openweathermap.org";    // name address for openweathermap (using DNS)
 
 WiFiClient client;
 unsigned long lastConnectionTime = 10 * 60 * 1000;     // last time you connected to the server, in milliseconds
-const unsigned long postingInterval = 10 * 60 * 1000;  // posting interval of 10 minutes  (10L * 1000L; 10 seconds delay for testing)
+const unsigned long postingInterval = 0.5 * 60 * 1000;  // posting interval of 10 minutes  (10L * 1000L; 10 seconds delay for testing)
 
 Adafruit_HTU21DF htu = Adafruit_HTU21DF();
 float sensTemp = 0;
@@ -147,7 +153,30 @@ void loop() {
     lcd.setCursor(0,1);
     lcd.print(String(sensHum));
   }
+
+  /*timeElapsed = millis() - startTime;
+  if(timeElapsed >= 30 * 60 * 1000){
+    if(dataPoints == 12){
+      dataPoints = 0;
+      humAvg /= 30;
+      if(humAvg < 50){
+        timeToWater = true;
+        isHumLow = true;
+      }
+      humAvg = 0;
+      timeElapsed = 0;
+    }
+    else{
+      humAvg += sensHum;
+      dataPoints++;
+    }
+  }
   
+  if(timeToWater){
+    // code for servo
+    lcd.print("Watering...");
+    timeToWater = false;
+  }*/
 }
 
 void parseJson(const char * jsonString) {
@@ -241,6 +270,12 @@ void isTimeToWater(float currHum, boolean willRain){
       timeToWater = true;
     }
   }
+
+  /*
+   * if(willRain){
+   *   timeToWater = true;
+   * }
+   */
 }
 
 void printTime(float dt) {
