@@ -36,7 +36,7 @@ boolean willBeRain = false;
 int timeStart = millis();
 int timeElapsed = 0;
 int humAvg = 0;
-int dataPoints = 0;
+int dataPoints = 1;
 boolean isHumLow = false;
 
 int humSum = 0;
@@ -46,8 +46,19 @@ int status = WL_IDLE_STATUS;
 const char server[] = "api.openweathermap.org";    // name address for openweathermap (using DNS)
 
 WiFiClient client;
+
+/////////////////////////////////////////////////
+
+
 unsigned long lastConnectionTime = 10 * 60 * 1000;     // last time you connected to the server, in milliseconds
-const unsigned long postingInterval = 10 * 60 * 1000;  // posting interval of 10 minutes  (10L * 1000L; 10 seconds delay for testing)
+const unsigned long postingInterval = 2 * 60 * 1000;  // posting interval of 10 minutes  (10L * 1000L; 10 seconds delay for testing)
+String countryCode = "5368361"; // LA:5368361 London:2643741
+const float MEASURE_INT = 0.5; // number of minutes between humidity readings
+const int NUM_DATA = 2; // number of data points to collect
+
+
+
+////////////////////////////////////////////////
 
 Adafruit_HTU21DF htu = Adafruit_HTU21DF();
 float sensTemp = 0;
@@ -141,9 +152,10 @@ void loop() {
     //Serial.println(endResponse);
   }
   else {
-    if (!stopplz)
+    if (!stopplz) {
       Serial.println("No incoming data");
-    delay(500);
+      delay(500);
+    }
   }
   // endResponse == 0 means equal number of open and close curly brackets reached
   if (endResponse == 0 && startJson == true) {
@@ -156,21 +168,24 @@ void loop() {
 
   if (getSensor) {
     timeElapsed = millis() - timeStart;
-    if (timeElapsed >= 2 * 1000) {
-      Serial.println("Num data points: "+String(dataPoints));
+    if (timeElapsed >= MEASURE_INT * 60 * 1000) {
+      Serial.println("Num data points: " + String(dataPoints));
       sensHum = htu.readHumidity();
       humSum += sensHum;
-      if (!willBeRain && dataPoints == 1) {
+      if (dataPoints >= NUM_DATA) {
         Serial.println("Time to move the servo...");
-        dataPoints = 0;
-        humSum /= 2;
-        servo.write(180); // open valve
-        delay(90);
-        servo.write(90);
-        delay(100 * (100 - humSum) / 2 );
-        servo.write(0);
-        delay(90);
-        servo.write(90);
+        dataPoints = 1;
+        humSum /= NUM_DATA + 1;
+        Serial.println("Avg humidity: " + String(humSum));
+        if (!willBeRain && humSum < 70) {
+          servo.write(0); // open valve
+          delay(140);
+          servo.write(90);
+          delay(-1000 / 7 * humSum + 15000);
+          servo.write(180);
+          delay(150);
+          servo.write(90);
+        }
         humSum = 0;
         timeElapsed = 0;
       }
@@ -180,7 +195,7 @@ void loop() {
       }
       timeStart = millis();
     }
-    
+
     /*lcd.setCursor(0,0);
       lcd.print(String(sensTemp));
       lcd.setCursor(0,1);
@@ -192,7 +207,7 @@ void loop() {
     //lcd.print("Watering...");
     digitalWrite(8, HIGH);
     timeToWater = false;
-  }*/
+    }*/
 }
 
 void parseJson(const char * jsonString) {
@@ -213,38 +228,26 @@ void parseJson(const char * jsonString) {
 
   String city = root["city"]["name"];
 
-  float anything3 = hour3["dt"];
-  Serial.println(anything3);
-
-  float anything6 = hour6["dt"];
-  Serial.println(anything6);
-
-  float anything9 = hour9["dt"];
-  Serial.println(anything9);
-
-  float anything12 = hour12["dt"];
-  Serial.println(anything12);
-
   String timeHour3 = hour3["dt_txt"];
   float tempHour3 = hour3["main"]["temp"];
   float humidityHour3 = hour3["main"]["humidity"];
-  String weatherHour3 = hour3["weather"][0]["description"];
+  String weatherHour3 = hour3["weather"][0]["main"];
 
 
   String timeHour6 = hour6["dt_txt"];
   float tempHour6 = hour6["main"]["temp"];
   float humidityHour6 = hour6["main"]["humidity"];
-  String weatherHour6 = hour6["weather"][0]["description"];
+  String weatherHour6 = hour6["weather"][0]["main"];
 
   String timeHour9 = hour9["dt_txt"];
   float tempHour9 = hour9["main"]["temp"];
   float humidityHour9 = hour9["main"]["humidity"];
-  String weatherHour9 = hour9["weather"][0]["description"];
+  String weatherHour9 = hour9["weather"][0]["main"];
 
   String timeHour12 = hour12["dt_txt"];
   float tempHour12 = hour12["main"]["temp"];
   float humidityHour12 = hour12["main"]["humidity"];
-  String weatherHour12 = hour12["weather"][0]["description"];
+  String weatherHour12 = hour12["weather"][0]["main"];
 
   if (weatherHour3 == "Rain" || weatherHour6 == "Rain" || weatherHour9 == "Rain" || weatherHour12 == "Rain") {
     willBeRain = true;
@@ -336,7 +339,7 @@ void httpRequest() {
     Serial.println("connected to server");
     // Make a HTTP request:
     client.print("GET /data/2.5/forecast?");
-    client.print("id=5368361");
+    client.print("id=" + countryCode);
     client.print("&appid=" + apiKey);
     client.print("&cnt=4"); // data is for every 3 hours, cnt=4 gives 12-hour look ahead
     client.println("&units=metric HTTP/1.1");
