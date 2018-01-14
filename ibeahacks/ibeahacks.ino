@@ -183,9 +183,9 @@ void loop() {
           servo.write(90);
           delay(-1000 / 7 * humSum + 15000);
           servo.write(180);
-          delay(150);
+          // delay(150);
           // servo.write(90);
-          for (int pos = 0; pos <= 90; pos += 1) { 
+          for (int pos = 0; pos <= 90; pos++) { 
             myservo.write(pos);              // tell servo to go to position in variable 'pos'
             delay(2);                       // waits 15ms for the servo to reach the position
           }
