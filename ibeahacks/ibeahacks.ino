@@ -15,7 +15,7 @@
 //#include <LiquidCrystal.h>
 //LiquidCrystal lcd(12,11,5,4,3,2);
 
-Servo myservo;
+Servo servo;
 
 #define JSON_BUFF_DIMENSION 2500
 //#include "arduino_secrets.h"
@@ -38,6 +38,8 @@ int timeElapsed = 0;
 int humAvg = 0;
 int dataPoints = 0;
 boolean isHumLow = false;
+
+int humSum = 0;
 
 int status = WL_IDLE_STATUS;
 
@@ -62,8 +64,8 @@ void setup() {
   delay(2000);
   //lcd.clear();
 
-  myservo.attach(9);
-  myservo.write(90);
+  servo.attach(9);
+  servo.write(90);
 
   text.reserve(JSON_BUFF_DIMENSION);
   Serial.println("json buff loaded");
@@ -154,37 +156,43 @@ void loop() {
 
   if (getSensor) {
     timeElapsed = millis() - timeStart;
-    if (timeElapsed >= 30 * 60 * 1000) {
-      if (!willRain && dataPoints == 24) {
+    if (timeElapsed >= 2 * 1000) {
+      Serial.println("Num data points: "+String(dataPoints));
+      sensHum = htu.readHumidity();
+      humSum += sensHum;
+      if (!willBeRain && dataPoints == 1) {
+        Serial.println("Time to move the servo...");
         dataPoints = 0;
-        humAvg /= 30;
-        if (humAvg < 50) {
-          servo.write(180); // open valve
-          delay(100 * (100 - humAvg) / 2 );
-          servo.write(90);
-        }
-        humAvg = 0;
+        humSum /= 2;
+        servo.write(180); // open valve
+        delay(90);
+        servo.write(90);
+        delay(100 * (100 - humSum) / 2 );
+        servo.write(0);
+        delay(90);
+        servo.write(90);
+        humSum = 0;
         timeElapsed = 0;
       }
       else {
-        humAvg += sensHum;
         dataPoints++;
+        Serial.println("Got a data point: " + String(sensHum));
       }
+      timeStart = millis();
     }
-    sensTemp = htu.readTemperature();
-    sensHum = htu.readHumidity();
+    
     /*lcd.setCursor(0,0);
       lcd.print(String(sensTemp));
       lcd.setCursor(0,1);
       lcd.print(String(sensHum));*/
   }
 
-  if (timeToWater) {
+  /*if (timeToWater) {
     // code for servo
     //lcd.print("Watering...");
     digitalWrite(8, HIGH);
     timeToWater = false;
-  }
+  }*/
 }
 
 void parseJson(const char * jsonString) {
@@ -259,6 +267,7 @@ void parseJson(const char * jsonString) {
   printWeather(timeHour6, tempHour6, humidityHour6, weatherHour6, "*C");
   printWeather(timeHour9, tempHour9, humidityHour9, weatherHour9, "*C");
   printWeather(timeHour12, tempHour12, humidityHour12, weatherHour12, "*C");
+  Serial.println("Will be rain: " + String(willBeRain));
 
   Serial.println();
 
