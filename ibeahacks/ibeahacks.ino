@@ -1,3 +1,5 @@
+#include <Servo.h>
+
 //sensor
 #include <Adafruit_HTU21DF.h>
 #include <Wire.h>
@@ -10,8 +12,10 @@
 #include <ArduinoJson.h>
 
 //LCD
-#include <LiquidCrystal.h>
-LiquidCrystal lcd(12,11,5,4,3,2);
+//#include <LiquidCrystal.h>
+//LiquidCrystal lcd(12,11,5,4,3,2);
+
+Servo myservo;
 
 #define JSON_BUFF_DIMENSION 2500
 //#include "arduino_secrets.h"
@@ -41,7 +45,7 @@ const char server[] = "api.openweathermap.org";    // name address for openweath
 
 WiFiClient client;
 unsigned long lastConnectionTime = 10 * 60 * 1000;     // last time you connected to the server, in milliseconds
-const unsigned long postingInterval = 0.5 * 60 * 1000;  // posting interval of 10 minutes  (10L * 1000L; 10 seconds delay for testing)
+const unsigned long postingInterval = 10 * 60 * 1000;  // posting interval of 10 minutes  (10L * 1000L; 10 seconds delay for testing)
 
 Adafruit_HTU21DF htu = Adafruit_HTU21DF();
 float sensTemp = 0;
@@ -50,17 +54,20 @@ float sensHum = 0;
 void setup() {
   //Initialize serial and wait for port to open:
   Serial.begin(9600);
-  while(!Serial);
-  lcd.begin(16, 2);
-  lcd.clear();
+  while (!Serial);
+  //lcd.begin(16, 2);
+  //lcd.clear();
   Serial.println("Serial initialised");
-  lcd.print("LCD initialised");
+  //lcd.print("LCD initialised");
   delay(2000);
-  lcd.clear();
+  //lcd.clear();
+
+  myservo.attach(9);
+  myservo.write(90);
 
   text.reserve(JSON_BUFF_DIMENSION);
   Serial.println("json buff loaded");
-  
+
   // check for the presence of the shield:
   if (WiFi.status() == WL_NO_SHIELD) {
     Serial.println("WiFi shield not present");
@@ -90,7 +97,7 @@ boolean stopplz = false;
 boolean getSensor = false;
 
 void loop() {
-  
+
   // if ten minutes have passed since your last connection,
   // then connect again and send data:
   if (millis() - lastConnectionTime > postingInterval) {
@@ -134,7 +141,7 @@ void loop() {
   else {
     if (!stopplz)
       Serial.println("No incoming data");
-      delay(500);
+    delay(500);
   }
   // endResponse == 0 means equal number of open and close curly brackets reached
   if (endResponse == 0 && startJson == true) {
@@ -146,37 +153,37 @@ void loop() {
   }
 
   if (getSensor) {
+    timeElapsed = millis() - timeStart;
+    if (timeElapsed >= 30 * 60 * 1000) {
+      if (dataPoints == 12) {
+        dataPoints = 0;
+        humAvg /= 30;
+        if (humAvg < 50) {
+          timeToWater = true;
+          isHumLow = true;
+        }
+        humAvg = 0;
+        timeElapsed = 0;
+      }
+      else {
+        humAvg += sensHum;
+        dataPoints++;
+      }
+    }
     sensTemp = htu.readTemperature();
     sensHum = htu.readHumidity();
-    lcd.setCursor(0,0);
-    lcd.print(String(sensTemp));
-    lcd.setCursor(0,1);
-    lcd.print(String(sensHum));
+    /*lcd.setCursor(0,0);
+      lcd.print(String(sensTemp));
+      lcd.setCursor(0,1);
+      lcd.print(String(sensHum));*/
   }
 
-  /*timeElapsed = millis() - startTime;
-  if(timeElapsed >= 30 * 60 * 1000){
-    if(dataPoints == 12){
-      dataPoints = 0;
-      humAvg /= 30;
-      if(humAvg < 50){
-        timeToWater = true;
-        isHumLow = true;
-      }
-      humAvg = 0;
-      timeElapsed = 0;
-    }
-    else{
-      humAvg += sensHum;
-      dataPoints++;
-    }
-  }
-  
-  if(timeToWater){
+  if (timeToWater) {
     // code for servo
-    lcd.print("Watering...");
+    //lcd.print("Watering...");
+    digitalWrite(8, HIGH);
     timeToWater = false;
-  }*/
+  }
 }
 
 void parseJson(const char * jsonString) {
@@ -208,13 +215,13 @@ void parseJson(const char * jsonString) {
 
   float anything12 = hour12["dt"];
   Serial.println(anything12);
-  
+
   String timeHour3 = hour3["dt_txt"];
   float tempHour3 = hour3["main"]["temp"];
   float humidityHour3 = hour3["main"]["humidity"];
   String weatherHour3 = hour3["weather"][0]["description"];
 
-  
+
   String timeHour6 = hour6["dt_txt"];
   float tempHour6 = hour6["main"]["temp"];
   float humidityHour6 = hour6["main"]["humidity"];
@@ -234,29 +241,29 @@ void parseJson(const char * jsonString) {
     willBeRain = true;
   }
 
-/*
-  // convert to PST
-  struct tm ttmm;
-  time_t epoch;
-  char date[100];
-  if(strptime(timeHour3, "%Y-%m-%d %H:%M:%S", &ttmm) != NULL) {
-    epoch = mktime(&ttmm);
-    epoch = (long)epoch - 8 * 3600; // UTC-8
-    strftime(date, sizeof(date), "%Y-%m-%d", ttmm);
-    Serial.println(epoch);
-  }*/
-  
+  /*
+    // convert to PST
+    struct tm ttmm;
+    time_t epoch;
+    char date[100];
+    if(strptime(timeHour3, "%Y-%m-%d %H:%M:%S", &ttmm) != NULL) {
+      epoch = mktime(&ttmm);
+      epoch = (long)epoch - 8 * 3600; // UTC-8
+      strftime(date, sizeof(date), "%Y-%m-%d", ttmm);
+      Serial.println(epoch);
+    }*/
 
-  printWeather(timeHour3,tempHour3,humidityHour3,weatherHour3,"*C");
-  printWeather(timeHour6,tempHour6,humidityHour6,weatherHour6,"*C");
-  printWeather(timeHour9,tempHour9,humidityHour9,weatherHour9,"*C");
-  printWeather(timeHour12,tempHour12,humidityHour12,weatherHour12,"*C");
+
+  printWeather(timeHour3, tempHour3, humidityHour3, weatherHour3, "*C");
+  printWeather(timeHour6, tempHour6, humidityHour6, weatherHour6, "*C");
+  printWeather(timeHour9, tempHour9, humidityHour9, weatherHour9, "*C");
+  printWeather(timeHour12, tempHour12, humidityHour12, weatherHour12, "*C");
 
   Serial.println();
 
 }
 
-void printWeather(String dt_txt, float temp, float humidity, String weather, String unit){
+void printWeather(String dt_txt, float temp, float humidity, String weather, String unit) {
   Serial.println(dt_txt);
   Serial.println("Temperature: " + String(temp) + unit);
   Serial.println("Humidity: " + String(humidity) + "%");
@@ -264,7 +271,7 @@ void printWeather(String dt_txt, float temp, float humidity, String weather, Str
   Serial.println("");
 }
 
-void isTimeToWater(float currHum, boolean willRain){
+void isTimeToWater(float currHum, boolean willRain) {
   if (!willRain) {
     if (currHum < 50) {
       timeToWater = true;
@@ -272,10 +279,10 @@ void isTimeToWater(float currHum, boolean willRain){
   }
 
   /*
-   * if(willRain){
-   *   timeToWater = true;
-   * }
-   */
+     if(willRain){
+       timeToWater = true;
+     }
+  */
 }
 
 void printTime(float dt) {
@@ -288,7 +295,7 @@ void printTime(float dt) {
 
   String monString = "";
 
-  switch(mon){
+  switch (mon) {
     case 1: monString = "January";
     case 2: monString = "Febuary";
     case 3: monString = "March";
@@ -304,7 +311,7 @@ void printTime(float dt) {
     default: monString = "January";
   }
 
-  Serial.println(String(hr)+":"+String(mi)+" "+ monString +" " + String(da)+", " + String(yr));
+  Serial.println(String(hr) + ":" + String(mi) + " " + monString + " " + String(da) + ", " + String(yr));
 }
 
 // this method makes a HTTP connection to the server:
